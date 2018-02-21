@@ -43,15 +43,16 @@ def for_image_click_center(image_path, click = 1):
 		gui.alert("Failed: " + str(e))
 		print(e)
 
-def show_desktop(image_path, click = 1):
+def for_image_click_left_cornor(image_path, click = 1):
 	try:
 		print('MOUSE: Click left cornor on ', image_path, ' for ', click)
-		x, y, x2, y2 = gui.locateOnScreen(image_path)
-		mouse.moveTo(x, y)
-		while(click > 0):
-			print('\tclicked')
-			mouse.click()
-			click -= 1
+		if gui.locateOnScreen(image_path) != None:
+			x, y, x2, y2 = gui.locateOnScreen(image_path)
+			mouse.moveTo(x, y)
+			while(click > 0):
+				print('\tclicked')
+				mouse.click()
+				click -= 1
 	except Exception as e:
 		gui.alert("Failed: " + str(e))
 		print(e)
@@ -69,12 +70,15 @@ def wait_until_image_is_found(image_path):
 		image = gui.locateOnScreen(image_path)	
 
 def channel_array_disable(offset, channels):
-	for i in range(0, channels):
+	print(channels)
+	for i in range(0, len(channels)):
 		if(channels[i] == True):
 			if(offset == 0):
 				channels[i] = False;
 			else:
 				offset -= 1
+
+	print(channels)
 	return channels
 
 
@@ -82,14 +86,14 @@ def channel_array_disable(offset, channels):
 upper_bound = 0.0
 while(True):
 	try:
-		upper_bound = float(input('Please enter the upper bound:'))
+		upper_bound = float(input('Please enter the upper bound in nA (i.e. 2 = 2 nA = 2x10^-9)'))*10**-9
 		break
 	except Exception as e:
 		print("You didn't enter a valid float number")
 
 ## Open the CHI program window
 gui.alert('Please start the CHI program and set 8 channel active, then click OK')
-show_desktop()
+click_lower_right_conor()
 for_image_click_center('media/chi_icon.png')
 time.sleep(1)
 maximize_window()
@@ -118,17 +122,22 @@ while(True):
 
 	## Open saved file and check channels
 	file = open(file_name, 'r')
+	import sys
 	for line in file:
-		words = re.split('\t+', line)
+		words = re.split('\t', line)
 		words.pop(0) # First column not used
 		for i in range(0, len(words)):
 			if(float(words[i]) > float(upper_bound)):
+				print(active_channels)
 				active_channels = channel_array_disable(i, active_channels)
 	print("File is read")
+	time.sleep(2)
 
 	## Disable channels
 	try:
-		for i in range(0, len(active_channels)):
+		for_image_click_center('media/parameter_button.png')
+		for i in range(0, len(active_channels)-1):
+			print(active_channels,"we are here",i)
 			if(active_channels[i] == False):
 				image_path = 'media/on_e' + str(i+1) + '.png'
 				for_image_click_left_cornor(image_path)
@@ -141,5 +150,3 @@ while(True):
 	if(all(channel == False for channel in active_channels)):
 		break
 	time.sleep(2)  
-
-
